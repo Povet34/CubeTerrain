@@ -1,6 +1,4 @@
 //#define USE_SMOOTH
-using Colorverse;
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +9,7 @@ public partial class CubeTerrain : WorldTerrain
 {
     // todo : test
     public Material[] materialList;
+    public List<TileInfo> testTileInfos;
 
     public GameObject selectionMarkPrefab;
     public GameObject touchMarkPrefab;
@@ -2364,42 +2363,45 @@ public partial class CubeTerrain : WorldTerrain
         return new Vector2(terrainWidth * cellX / DIV, terrainHeight * cellZ / DIV);
     }
 
-    AssetLoadHelper _helper;
-    AssetLoadHelper _GetHelper(string tileId)
-    {
-        if (null == _helper)
-            _helper = new AssetLoadHelper(new AssetBasisInfo(tileId, tileId, eAssetType.MaterialItem));
-        return _helper;
-    }
-    /// <summary>
-    /// material을 로딩한 다음에, callback으로 tileIndex, tileItemId 를 return해 준다.
-    /// </summary>
-    /// <param name="tileId"></param>
-    /// <param name="callback"></param>
-    public void AddTileMaterial(string tileId, Callback<int, string> callback)
-    {
-        for (int i = 0; i < tileMaterials.Count; i++)
-        {
-            if (null != tileMaterials[i] && tileMaterials[i].tileItemID == tileId)
-            {
-                callback?.Invoke(i, tileId);
-                return;
-            }
-        }
-        if (tileMaterials.Count >= MAX_TILE)
-        {
-            callback?.Invoke(-1, tileId);
-            return;
-        }
-        _GetHelper(tileId);
-        _helper.LoadMaterialItem(tileId, (assetRef, param, state) =>
-        {
-            Debug.Assert(assetRef.isLoaded);
-            Debug.Assert(assetRef is AssetRef_Material);
-            tileMaterials.Add(new TileInfo(tileId, assetRef.getAsset_Material));
-            callback?.Invoke(tileMaterials.Count - 1, tileId);
-        });
-    }
+    //AssetLoadHelper _helper;
+    //AssetLoadHelper _GetHelper(string tileId)
+    //{
+    //    if (null == _helper)
+    //        _helper = new AssetLoadHelper(new AssetBasisInfo(tileId, tileId, eAssetType.MaterialItem));
+    //    return _helper;
+    //}
+    ///// <summary>
+    ///// material을 로딩한 다음에, callback으로 tileIndex, tileItemId 를 return해 준다.
+    ///// </summary>
+    ///// <param name="tileId"></param>
+    ///// <param name="callback"></param>
+    //public void AddTileMaterial(string tileId, Callback<int, string> callback)
+    //{
+    //    for (int i = 0; i < tileMaterials.Count; i++)
+    //    {
+    //        if (null != tileMaterials[i] && tileMaterials[i].tileItemID == tileId)
+    //        {
+    //            callback?.Invoke(i, tileId);
+    //            return;
+    //        }
+    //    }
+    //    if (tileMaterials.Count >= MAX_TILE)
+    //    {
+    //        callback?.Invoke(-1, tileId);
+    //        return;
+    //    }
+    //    _GetHelper(tileId);
+    //    _helper.LoadMaterialItem(tileId, (assetRef, param, state) =>
+    //    {
+    //        Debug.Assert(assetRef.isLoaded);
+    //        Debug.Assert(assetRef is AssetRef_Material);
+    //        tileMaterials.Add(new TileInfo(tileId, assetRef.getAsset_Material));
+    //        callback?.Invoke(tileMaterials.Count - 1, tileId);
+    //    });
+    //}z
+
+
+
     // return index
     int _AddTileMaterial(TileInfo tile)
     {
@@ -2480,13 +2482,13 @@ public partial class CubeTerrain : WorldTerrain
                     string tileItemId = tileItems[i];
                     if (string.IsNullOrEmpty(tileItemId) || tileItemId == "null")
                     {
-                        Material defaultMat = AssetUtil.LoadResource<Material>(AssetUtil.LOADING_MATERIAL);
+                        Material defaultMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
                         tileMaterials[i] = new TileInfo(tileItemId, defaultMat);
                     }
                     else
                     {
                         // owner의 함수로 callback하는 이유는, 이 terrain이 destroy되면 callback이 오지 않도록 하기 위함.
-                        owner._GetHelper(tileItemId).LoadMaterialItem(tileItemId, owner._Callback_Loaded_Material, i);
+                        //owner._GetHelper(tileItemId).LoadMaterialItem(tileItemId, owner._Callback_Loaded_Material, i);
                     }
                 }
             }
@@ -2509,15 +2511,15 @@ public partial class CubeTerrain : WorldTerrain
         }
     }
 
-    void _Callback_Loaded_Material(AssetRef assetRef, AssetLoadParam param, eAssetState state)
-    {
-        Debug.Assert(null != param);
-        Debug.Assert(assetRef.isLoaded);
-        Debug.Assert(assetRef is AssetRef_Material);
-        int index = param.index1;
-        if (null != _param)
-            _param.SetTileMaterial(index, new TileInfo(assetRef.itemId, assetRef.getAsset_Material));
-    }
+    //void _Callback_Loaded_Material(AssetRef assetRef, AssetLoadParam param, eAssetState state)
+    //{
+    //    Debug.Assert(null != param);
+    //    Debug.Assert(assetRef.isLoaded);
+    //    Debug.Assert(assetRef is AssetRef_Material);
+    //    int index = param.index1;
+    //    if (null != _param)
+    //        _param.SetTileMaterial(index, new TileInfo(assetRef.itemId, assetRef.getAsset_Material));
+    //}
 
     CubeTerrainParam _param;
     Coroutine _reservedCreationCoroutine = null;
@@ -2597,11 +2599,12 @@ public partial class CubeTerrain : WorldTerrain
         if (delayCall)
             yield return null;
         // 먼저 cellmap부터 그린다.
+
         if (null != _param)
         {
             if (_param.isTileLoaded)
             {
-                CreateTerrain(_param.width, _param.height, _param.cellMap, _param.tileMaterials, _param.tileMap);
+                CreateTerrain(_param.width, _param.height, _param.cellMap, testTileInfos, _param.tileMap);
                 _AdjustTerrainPosition(_param.pivotX, _param.pivotY);
                 _param = null;
                 _reservedCreationCoroutine = null;
@@ -2665,11 +2668,13 @@ public partial class CubeTerrain : WorldTerrain
     // width , height는 254 이하여야 한다. (그래야 마지막 점이 255가 됨)
     public void CreateTerrain(int width, int height, string cellMap, List<TileInfo> tileMaterials = null, string tileMap = null)
     {
-        CLogger.Log("CreateTerrain - " + width + "," + height);
+        testTileInfos = tileMaterials;
+
+        Debug.Log("CreateTerrain - " + width + "," + height);
         foreach (var d in groupMap)
             d.Value.Reset(baseMaterialList, propInfo);
         foreach (var d in tileGroupMap)
-            d.Value.Reset(tileMaterials, propInfo);
+            d.Value.Reset(testTileInfos, propInfo);
         groupMap.Clear();
         tileGroupMap.Clear();
 
@@ -2718,7 +2723,7 @@ public partial class CubeTerrain : WorldTerrain
                 tileArr[i] = TILE_NONE;
         }
 
-        this.tileMaterials = tileMaterials;
+        this.tileMaterials = testTileInfos;
         if (this.tileMaterials == null)
             this.tileMaterials = new List<TileInfo>();
 
@@ -2742,7 +2747,7 @@ public partial class CubeTerrain : WorldTerrain
 #if UNITY_EDITOR
         if (width >= 255 || height >= 255)
         {
-            CLogger.LogError("CreateTerrain - width or height must be under 255.");
+            Debug.LogError("CreateTerrain - width or height must be under 255.");
             return;
         }
 #endif
@@ -4275,8 +4280,8 @@ public partial class CubeTerrain : WorldTerrain
             StopCoroutine(_reservedCreationCoroutine);
             _reservedCreationCoroutine = null;
         }
-        if (null != _helper)
-            AssetLoadHelper.Destroy(ref _helper);
+        //if (null != _helper)
+        //    AssetLoadHelper.Destroy(ref _helper);
     }
     protected bool isTerrainChanged = false;
     public bool IsTerrainChanged()

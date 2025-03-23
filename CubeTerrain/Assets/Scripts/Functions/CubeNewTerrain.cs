@@ -1,5 +1,3 @@
-using Colorverse;
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -2371,7 +2369,6 @@ public class CubeNewTerrain : CubeTerrain
             int result = 0;
             if (vertexIndexMap.TryGetValue(VertexIndex(floor, x, y, pointIndex), out result))
                 return result;
-            CLogger.LogWarning("GetVertexInfo - invalid index." + x + "," + y + "," + pointIndex);
             return result;
         }
         public bool HasVertexInfo(byte floor, short x, short y, byte pointIndex)
