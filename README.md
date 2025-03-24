@@ -10,6 +10,7 @@ CubeTerrain
   public const byte CELL_LAND = (byte)1;   // B
   public const byte CELL_WATER = (byte)2;  // C
   public const byte CELL_SMOOTH = (byte)3; // D
+  public const byte TOTAL_CELL_BASE_TYPE = 4;
   ```
 
 ### Create Terrain
