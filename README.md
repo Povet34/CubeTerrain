@@ -26,7 +26,9 @@ ResetTerrain();
 
 ### Edit Terrain
 ```c#
-Modify()
+bool ModifyTile(byte x, byte y, byte tileType, bool refreshTerrain = true)
+bool ModifyCell(byte baseCellType, byte fromTx, byte fromTy, byte toTx, byte toTy, byte targetFloor)
+bool PickCell(Vector3 startWorld, Vector3 directionWorld, out byte floor, out byte x, out byte y)
 ```
 
 ### Create Mesh
