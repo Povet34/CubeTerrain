@@ -17,22 +17,6 @@ public class CreateTerrainStarter : MonoBehaviour
             tileInfos.Add(new WorldTerrain.TileInfo(material.name, material));
         }
 
-        int propIndex = 0;
-        List<TilePropInfo> tilePropInfos = new List<TilePropInfo>();
-        foreach (GameObject prop in props)
-        {
-            var propInfo = new TilePropInfo();
-            propInfo.index = propIndex++;
-            propInfo.propPrefab = prop;
-            propInfo.type = TilePropType.GRASS;
-            propInfo.randomMin = 10;
-            propInfo.randomMax = 100;
-            propInfo.probPercentage = 50;
-
-            tilePropInfos.Add(propInfo);
-        }
-
-        cubeNewTerrain.propInfo = tilePropInfos.ToArray();
         cubeNewTerrain.CreateTerrain(8, 8, "BBBBBBBBCCCCCCCBBBBDDDDDDBBBBFFFFJJJBBBBBBBBBBBBBBBBBBBBBBBBBBBB", tileInfos);
     }
 
@@ -61,10 +45,17 @@ public class CreateTerrainStarter : MonoBehaviour
                 byte currentCellType = cubeNewTerrain.GetCellType(x, y);
                 byte newCellType;
 
-                newCellType = CELL_LAND;
+                if (isLeftClick)
+                {
+                    newCellType = CELL_LAND;
+                }
+                else
+                {
+                    newCellType = currentCellType; // 셀 타입 유지
+                }
 
                 // 셀 타입이 유효한지 확인
-                if (cubeNewTerrain.ModifyCell(newCellType, x, y, x, y, ++floor))
+                if (cubeNewTerrain.ModifyCell(newCellType, x, y, x, y, isLeftClick ? ++floor : --floor))
                 {
                     Debug.Log($"셀 수정 성공: {x}, {y}, {newCellType}");
                 }
