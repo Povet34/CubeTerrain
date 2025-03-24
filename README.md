@@ -17,9 +17,11 @@ CubeTerrain
 - ex) CellInfo의 저장은 8X8 크기일 경우 "BBBBBBBBCCCCCCCBBBBDDDDDDBBBBFFFFJJJBBBBBBBBBBBBBBBBBBBBBBBBBBBB" 이렇게 저장됨.
 
 ### Create Terrain
-- CreateTerrain(int width, int height, string cellMap, List<TileInfo> tileMaterials = null, string tileMap = null)
-- ClearTerrain();
-- ResetTerrain();
+```c#
+CreateTerrain(int width, int height, string cellMap, List<TileInfo> tileMaterials = null, string tileMap = null)
+ClearTerrain();
+ResetTerrain();
+```
 
 
 ### Edit Terrain
