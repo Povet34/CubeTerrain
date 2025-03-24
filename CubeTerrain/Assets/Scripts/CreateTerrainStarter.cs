@@ -33,6 +33,46 @@ public class CreateTerrainStarter : MonoBehaviour
         }
 
         cubeNewTerrain.propInfo = tilePropInfos.ToArray();
-        cubeNewTerrain.CreateTerrain(8,8, "BBBBBBBBCCCCCCCBBBBDDDDDDBBBBFFFFJJJBBBBBBBBBBBBBBBBBBBBBBBBBBBB", tileInfos);
+        cubeNewTerrain.CreateTerrain(8, 8, "BBBBBBBBCCCCCCCBBBBDDDDDDBBBBFFFFJJJBBBBBBBBBBBBBBBBBBBBBBBBBBBB", tileInfos);
+    }
+
+    private void Update()
+    {
+        if (Input.GetMouseButtonDown(0)) // 마우스 왼쪽 버튼 클릭 감지
+        {
+            HandleMouseClick(true);
+        }
+        else if (Input.GetMouseButtonDown(1)) // 마우스 오른쪽 버튼 클릭 감지
+        {
+            HandleMouseClick(false);
+        }
+    }
+
+    private void HandleMouseClick(bool isLeftClick)
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            Vector3 clickPosition = hit.point;
+            byte floor, x, y;
+            if (cubeNewTerrain.PickCell(clickPosition, ray.direction, out floor, out x, out y))
+            {
+                // 현재 셀 타입을 가져와서 한 층 더 쌓거나 내리기
+                byte currentCellType = cubeNewTerrain.GetCellType(x, y);
+                byte newCellType;
+
+                newCellType = CELL_LAND;
+
+                // 셀 타입이 유효한지 확인
+                if (cubeNewTerrain.ModifyCell(newCellType, x, y, x, y, ++floor))
+                {
+                    Debug.Log($"셀 수정 성공: {x}, {y}, {newCellType}");
+                }
+                else
+                {
+                    Debug.Log($"셀 수정 실패: {x}, {y}, {newCellType}");
+                }
+            }
+        }
     }
 }
