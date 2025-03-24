@@ -24,7 +24,7 @@ public partial class CubeTerrain : WorldTerrain
         WATERFALL = 1,
     }
     [System.Serializable]
-    protected class TilePropInfo
+    public class TilePropInfo
     {
         public int index;
         public GameObject propPrefab;
@@ -218,7 +218,7 @@ public partial class CubeTerrain : WorldTerrain
         }
     }
     [SerializeField]
-    protected TilePropInfo[] propInfo;
+    public TilePropInfo[] propInfo;
 
     // 최적화를 위해서 따로 pointer를 가진다.
     protected int grassPropInfo1 = -1;
@@ -1662,7 +1662,7 @@ public partial class CubeTerrain : WorldTerrain
         }
     }
     */
-    protected interface CellGroup
+    public interface CellGroup
     {
         public class PropData
         {
@@ -4379,7 +4379,7 @@ public partial class CubeTerrain : WorldTerrain
             }
         }
     }
-    /*
+
 #if UNITY_EDITOR
     private void Update()
     {
@@ -4392,5 +4392,5 @@ public partial class CubeTerrain : WorldTerrain
             ResetTerrain();
         }
     }
-#endif*/
+#endif
 }
