@@ -1515,9 +1515,15 @@ public partial class CubeTerrain : WorldTerrain
                     hasPoint = true;
                     minRatio = Mathf.Min(minRatio, ratio);
                     maxRatio = Mathf.Max(maxRatio, ratio);
+
+                    // 디버그용으로 hitPoint를 저장합니다.
+                    debugHitPoint = hitPoint;
                 }
             }
         }
+
+        pickPoses.Clear();
+
         if (hasPoint && maxRatio > 0)
         {
             Vector3 startPt = ray.origin + ray.direction * Mathf.Max(0, minRatio);
@@ -1538,9 +1544,14 @@ public partial class CubeTerrain : WorldTerrain
             {
                 Vector3 curPt = startPt + ray.direction * i * oneCellUnitDist;
                 int _floor, _x, _z;
+
+                pickPoses.Add(curPt);
+
                 if (CheckPoint(curPt, checkMap, out _floor, out _x, out _z))
                 {
                     Vector3 pickPos = GetCenterPos(_x, _z);
+                    determinedPos = pickPos;
+
                     // 저장해둔 정보중에 현재것보다 가까운게 있다면, 그것을 return한다.
                     // (비교시에는 y = 0으로 비교한다.즉 높이는 무시한다.)
                     if (alterFloor >= 0 && (basePt - pickPos).sqrMagnitude > (basePt - alterClosetPos).sqrMagnitude)
@@ -1570,6 +1581,8 @@ public partial class CubeTerrain : WorldTerrain
                         {
                             // 가장 가까운 것을 keep해둔다. (비교시에는 y = 0으로 비교한다.즉 높이는 무시한다.)
                             Vector3 pickPos = GetCenterPos(_x, _z);
+                            lastedPos = pickPos;
+
                             if (alterFloor < 0 || (basePt - pickPos).sqrMagnitude < (basePt - alterClosetPos).sqrMagnitude)
                             {
                                 alterFloor = _floor;
@@ -1677,6 +1690,18 @@ public partial class CubeTerrain : WorldTerrain
                 else if (CELL_NONE == baseCellType)
                 {
                     if (floor <= targetFloor)
+                    {
+                        continue;
+                    }
+
+                    if (_ModifyCellBody(baseCellType, _x, _y, targetFloor))
+                    {
+                        isModifyCell = true;
+                    }
+                }
+                else if (CELL_WATER == baseCellType)
+                {
+                    if (floor >= targetFloor)
                     {
                         continue;
                     }
@@ -2095,6 +2120,51 @@ public partial class CubeTerrain : WorldTerrain
         }
     }
 
+    private Vector3? debugHitPoint = null;
+    private Vector3? determinedPos = null;
+    private Vector3? lastedPos = null;
+    private List<Vector3> pickPoses = new List<Vector3>();
+
+    private void OnDrawGizmos()
+    {
+        if (debugHitPoint.HasValue)
+        {
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawSphere(debugHitPoint.Value, 0.1f);
+        }
+
+        if (pickPoses.Count > 0)
+        {
+            Gizmos.color = Color.green;
+            foreach (var pos in pickPoses)
+            {
+                Gizmos.DrawSphere(pos, 0.2f);
+            }
+        }
+
+        if(determinedPos.HasValue && lastedPos.HasValue && determinedPos.Value == lastedPos.Value)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawSphere(lastedPos.Value + (Vector3.left * 0.5f), 0.5f);
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(determinedPos.Value - (Vector3.left * 0.5f), 0.5f);
+        }
+        else
+        {
+            if (determinedPos.HasValue)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawSphere(determinedPos.Value, 0.5f);
+            }
+
+            if (lastedPos.HasValue)
+            {
+                Gizmos.color = Color.blue;
+                Gizmos.DrawSphere(lastedPos.Value, 0.5f);
+            }
+        }
+    }
 
     private void DrawRayDebug(Vector3 start, Vector3 direction, float length, Color color, float duration)
     {
