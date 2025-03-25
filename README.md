@@ -1,6 +1,9 @@
 # CubeTerrain
 CubeTerrain
-![image](https://github.com/user-attachments/assets/c688f0d7-3595-4a96-826f-d361810fa8be)
+
+
+https://github.com/user-attachments/assets/85ec54db-658d-42a1-8cc3-ca68f1348c75
+
 
 -----
 
