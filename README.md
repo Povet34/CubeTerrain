@@ -18,9 +18,9 @@ public const byte TOTAL_CELL_BASE_TYPE = 4;
 
 ### Create Terrain
 ```c#
-CreateTerrain(int width, int height, string cellMap, List<TileInfo> tileMaterials = null, string tileMap = null)
-ClearTerrain();
-ResetTerrain();
+void CreateTerrain(int width, int height, string cellMap, List<TileInfo> tileMaterials = null, string tileMap = null)
+void ClearTerrain();
+void ResetTerrain();
 ```
 
 
