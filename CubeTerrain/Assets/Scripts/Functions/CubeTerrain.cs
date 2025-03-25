@@ -508,133 +508,7 @@ public partial class CubeTerrain : WorldTerrain
         y = (byte)((index & 0xffff) >> 8);
         x = (byte)(index & 0xff);
     }
-    /*
-    class CellGroupTerrain : CellGroup
-    {
-        public int index;
-        public List<VertexInfo> planeList;
-        public GameObject groupObject;
-        public GameObject propParentObject;
-        bool reset = false;
 
-        List<List<CellGroup.PropData>> propList;
-        public CellGroupTerrain(int index, List<TileInfo> tileMaterials, TilePropInfo[] propInfo)
-        {
-            reset = true;
-            this.index = index;
-            planeList = new List<VertexInfo>();
-            for (int i = 0; i < tileMaterials.Count; i++)
-                planeList.Add(new VertexInfo());
-            groupObject = null;
-            propList = new List<List<CellGroup.PropData>>();
-            if (propInfo != null)
-            {
-                for (int i = 0; i < propInfo.Length; i++)
-                    propList.Add(new List<CellGroup.PropData>());
-            }
-        }
-        
-        public bool IsReset()
-        {
-            return reset;
-        }
-        public void Reset(List<TileInfo> tileMaterials, TilePropInfo[] propInfo)
-        {
-            if (reset)
-                return;
-            reset = true;
-            for (int i = 0; i < planeList.Count; i++)
-                planeList[i].Reset();
-            if (tileMaterials != null && tileMaterials.Count > planeList.Count)
-            {
-                for (int i = planeList.Count; i < tileMaterials.Count; i++)
-                    planeList.Add(new VertexInfo());
-            }
-            if (propInfo != null)
-            {
-                for (int i = 0; i < propInfo.Length; i++)
-                {
-                    if (propList[i].Count > 0)
-                    {
-                        propInfo[i].Return(propList[i]);
-                        propList[i].Clear();
-                    }
-                }
-            }
-            if (propParentObject != null)
-            {
-                GameObject.Destroy(propParentObject);
-                propParentObject = null;
-            }
-            if (groupObject != null)
-            {
-                GameObject.Destroy(groupObject);
-                groupObject = null;
-            }
-        }
-        public GameObject AddProp(int propIndex, TilePropInfo info, Vector3 localPosition, int cellIndex, int diffFloor = -1)
-        {
-            if (propParentObject == null)
-            {
-                propParentObject = new GameObject("props");
-                if (groupObject != null)
-                    propParentObject.transform.SetParent(groupObject.transform);
-                propParentObject.transform.localPosition = Vector3.zero;
-                propParentObject.transform.localRotation = Quaternion.identity;
-                propParentObject.transform.localScale = Vector3.one;
-            }
-
-            GameObject obj = info.GetProp();
-            obj.transform.SetParent(propParentObject.transform);
-            obj.transform.localPosition = localPosition;
-            obj.transform.localRotation = Quaternion.identity;
-            obj.transform.localScale = Vector3.one;
-            propList[propIndex].Add(new CellGroup.PropData(obj, cellIndex));
-            obj.GetComponent<WaterFall>()?.SetFogPosition(diffFloor);
-            return obj;
-        }
-        public void RemoveTileProps(TilePropInfo[] propInfo, int cellIndex)
-        {
-            if (propInfo != null)
-            {
-                for (int i = 0; i < propInfo.Length; i++)
-                {
-                    if (propList[i].Count > 0)
-                        propInfo[i].ReturnAt(propList[i], cellIndex);
-                }
-            }
-        }
-        public void CreateGroup(Transform parent, List<TileInfo> tileMaterials, bool isDefaultTerrain)
-        {
-            if (groupObject != null)
-                return;
-            reset = false;
-            string prefix = isDefaultTerrain ? "terrain" : "tile";
-            byte floor, x, y;
-            GetFloorXYFromIndex(index, out floor, out x, out y);
-            GameObject group = new GameObject(string.Format("{0}[{1}][{2}][{3}]", prefix, floor, x, y));
-            group.transform.SetParent(parent);
-            group.transform.localPosition = Vector3.zero;
-            group.transform.localRotation = Quaternion.identity;
-            group.transform.localScale = Vector3.one;
-            groupObject = group;
-            if (propParentObject != null)
-            {
-                propParentObject.transform.SetParent(groupObject.transform);
-                propParentObject.transform.localPosition = Vector3.zero;
-                propParentObject.transform.localRotation = Quaternion.identity;
-                propParentObject.transform.localScale = Vector3.one;
-            }
-
-            for (int i = 0; i < planeList.Count; i++)
-            {
-                VertexInfo info = planeList[i];
-                bool castShadow = isDefaultTerrain;
-                info.CreateMesh(group.transform, "plane" + i, tileMaterials[i].material, isDefaultTerrain && (i == PLANE_LAND || i == PLANE_LAND_SIDE || i == PLANE_WALL || i == PLANE_WATER_WALL || i == PLANE_WATER), castShadow, i);
-            }
-        }
-    }
-    */
     protected Dictionary<int, CellGroup> groupMap = new Dictionary<int, CellGroup>();
     protected Dictionary<int, CellGroup> tileGroupMap = new Dictionary<int, CellGroup>();
 
@@ -951,6 +825,20 @@ public partial class CubeTerrain : WorldTerrain
         return pivotY;
     }
 
+    public Bounds GetTerrainBounds_WithY()
+    {
+        Vector2 terrainSize = GetTerrainSize();
+        float height = cellY * MAX_FLOOR;
+        Vector3 size = new Vector3(terrainSize.x, height, terrainSize.y);
+
+        Vector3 pivotPos = new Vector3(0f - pivotX * GROUP_UNIT_X * GetCellFullWidth(), 0f, 0f - pivotY * GROUP_UNIT_Y * GetCellFullHeight());
+        Vector3 center = new Vector3(pivotPos.x + (size.x * 0.5f), height * 0.5f, pivotPos.z + (size.z * 0.5f));
+
+        Bounds bounds = new Bounds(center, size);
+        return bounds;
+    }
+
+
     //높이 값은 설정X
     public override Bounds GetTerrainBounds()
     {
@@ -969,45 +857,6 @@ public partial class CubeTerrain : WorldTerrain
     {
         return new Vector2(terrainWidth * cellX / DIV, terrainHeight * cellZ / DIV);
     }
-
-    //AssetLoadHelper _helper;
-    //AssetLoadHelper _GetHelper(string tileId)
-    //{
-    //    if (null == _helper)
-    //        _helper = new AssetLoadHelper(new AssetBasisInfo(tileId, tileId, eAssetType.MaterialItem));
-    //    return _helper;
-    //}
-    ///// <summary>
-    ///// material을 로딩한 다음에, callback으로 tileIndex, tileItemId 를 return해 준다.
-    ///// </summary>
-    ///// <param name="tileId"></param>
-    ///// <param name="callback"></param>
-    //public void AddTileMaterial(string tileId, Callback<int, string> callback)
-    //{
-    //    for (int i = 0; i < tileMaterials.Count; i++)
-    //    {
-    //        if (null != tileMaterials[i] && tileMaterials[i].tileItemID == tileId)
-    //        {
-    //            callback?.Invoke(i, tileId);
-    //            return;
-    //        }
-    //    }
-    //    if (tileMaterials.Count >= MAX_TILE)
-    //    {
-    //        callback?.Invoke(-1, tileId);
-    //        return;
-    //    }
-    //    _GetHelper(tileId);
-    //    _helper.LoadMaterialItem(tileId, (assetRef, param, state) =>
-    //    {
-    //        Debug.Assert(assetRef.isLoaded);
-    //        Debug.Assert(assetRef is AssetRef_Material);
-    //        tileMaterials.Add(new TileInfo(tileId, assetRef.getAsset_Material));
-    //        callback?.Invoke(tileMaterials.Count - 1, tileId);
-    //    });
-    //}z
-
-
 
     // return index
     int _AddTileMaterial(TileInfo tile)
@@ -1622,8 +1471,6 @@ public partial class CubeTerrain : WorldTerrain
             && -EPSILON - cellY <= localPos.y && localPos.y <= cellY * MAX_FLOOR + EPSILON;
     }
 
-
-    // ray로 알맞을 cell을 pickup한다.
     public bool PickCell(Vector3 startWorld, Vector3 directionWorld, out byte floor, out byte x, out byte y)
     {
         floor = 0;
@@ -1634,6 +1481,9 @@ public partial class CubeTerrain : WorldTerrain
         Vector3 localDir = newBlock.transform.InverseTransformDirection(directionWorld);
         Ray ray = new Ray(localStart, localDir);
 
+        // 디버그용으로 Ray를 그립니다.
+        DrawRayDebug(localStart, localDir, 100f, Color.red, 5f);
+
         // 우선 6면과 만나는 점들을 찾아서 그중에 제일 가까운 점을 찾는다.
         Plane[] planes = new Plane[6];
         planes[0] = new Plane(new Vector3(1, 0, 0), 0);
@@ -1643,20 +1493,29 @@ public partial class CubeTerrain : WorldTerrain
         planes[4] = new Plane(new Vector3(0, 0, 1), 0);
         planes[5] = new Plane(new Vector3(0, 0, 1), -terrainHeight * GetCellFullHeight());
 
+        Bounds terrainBounds = GetTerrainBounds_WithY();
+        DrawTerrainBoundsDebug(terrainBounds, Color.blue, 5f);
+
         bool hasPoint = false;
         float minRatio = 10000000000;
         float maxRatio = -10000000000;
         for (int i = 0; i < planes.Length; i++)
         {
             float ratio;
-            planes[i].Raycast(ray, out ratio);
-            Vector3 hitPoint = ray.GetPoint(ratio);
-            Vector3 pt = ray.origin + ray.direction * ratio;
-            if (IsInTerrain(pt))
+            if (planes[i].Raycast(ray, out ratio))
             {
-                hasPoint = true;
-                minRatio = Mathf.Min(minRatio, ratio);
-                maxRatio = Mathf.Max(maxRatio, ratio);
+                Vector3 hitPoint = ray.GetPoint(ratio);
+                Vector3 pt = ray.origin + ray.direction * ratio;
+
+                // 디버그용으로 Plane과의 교차점을 그립니다.
+                Debug.DrawLine(ray.origin, hitPoint, Color.green, 5f);
+
+                if (IsInTerrain(pt))
+                {
+                    hasPoint = true;
+                    minRatio = Mathf.Min(minRatio, ratio);
+                    maxRatio = Mathf.Max(maxRatio, ratio);
+                }
             }
         }
         if (hasPoint && maxRatio > 0)
@@ -2235,5 +2094,48 @@ public partial class CubeTerrain : WorldTerrain
             ResetTerrain();
         }
     }
+
+
+    private void DrawRayDebug(Vector3 start, Vector3 direction, float length, Color color, float duration)
+    {
+        Debug.DrawRay(start, direction * length, color, duration);
+    }
+
+    private void DrawTerrainBoundsDebug(Bounds bounds, Color color, float duration)
+    {
+        Vector3 center = bounds.center;
+        Vector3 extents = bounds.extents;
+
+        // 8개의 꼭짓점을 계산합니다.
+        Vector3[] corners = new Vector3[8];
+        corners[0] = center + new Vector3(-extents.x, -extents.y, -extents.z);
+        corners[1] = center + new Vector3(extents.x, -extents.y, -extents.z);
+        corners[2] = center + new Vector3(extents.x, -extents.y, extents.z);
+        corners[3] = center + new Vector3(-extents.x, -extents.y, extents.z);
+        corners[4] = center + new Vector3(-extents.x, extents.y, -extents.z);
+        corners[5] = center + new Vector3(extents.x, extents.y, -extents.z);
+        corners[6] = center + new Vector3(extents.x, extents.y, extents.z);
+        corners[7] = center + new Vector3(-extents.x, extents.y, extents.z);
+
+        // 아래 면
+        Debug.DrawLine(corners[0], corners[1], color, duration);
+        Debug.DrawLine(corners[1], corners[2], color, duration);
+        Debug.DrawLine(corners[2], corners[3], color, duration);
+        Debug.DrawLine(corners[3], corners[0], color, duration);
+
+        // 위 면
+        Debug.DrawLine(corners[4], corners[5], color, duration);
+        Debug.DrawLine(corners[5], corners[6], color, duration);
+        Debug.DrawLine(corners[6], corners[7], color, duration);
+        Debug.DrawLine(corners[7], corners[4], color, duration);
+
+        // 수직선
+        Debug.DrawLine(corners[0], corners[4], color, duration);
+        Debug.DrawLine(corners[1], corners[5], color, duration);
+        Debug.DrawLine(corners[2], corners[6], color, duration);
+        Debug.DrawLine(corners[3], corners[7], color, duration);
+    }
+
+
 #endif
 }
